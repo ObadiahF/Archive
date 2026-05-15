@@ -225,3 +225,13 @@ export async function deleteEntry(path: string): Promise<void> {
   if (apiPath === "/") throw new ApiError("Cannot delete the root", 400)
   await request(`/api/entry?path=${encodeURIComponent(apiPath)}`, { method: "DELETE" })
 }
+
+export async function moveEntry(from: string, to: string): Promise<void> {
+  const fromApi = toApiPath(from)
+  const toApi = toApiPath(to)
+  await request("/api/move", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ from: fromApi, to: toApi }),
+  })
+}

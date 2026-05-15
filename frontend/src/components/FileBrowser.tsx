@@ -8,6 +8,7 @@ import {
   downloadFile,
   listFolder,
   logout,
+  moveEntry,
   uploadFile,
 } from "@/api/api"
 import { getToken } from "@/api/auth"
@@ -95,6 +96,30 @@ export function FileBrowser() {
       toast.error(err instanceof Error ? err.message : "Download failed")
     }
   }, [])
+
+  const handleMove = useCallback(
+    async (fromPath: string, toFolderPath: string) => {
+      const name = fromPath.split("/").filter(Boolean).pop()
+      if (!name) return
+      const srcParent = fromPath.split("/").slice(0, -1).join("/")
+      const dest = toFolderPath ? `${toFolderPath}/${name}` : name
+      if (srcParent === toFolderPath) return
+      if (dest === fromPath) return
+      if (toFolderPath === fromPath || toFolderPath.startsWith(fromPath + "/")) {
+        toast.error("Can't move a folder into itself")
+        return
+      }
+      try {
+        await moveEntry(fromPath, dest)
+        toast.success(`Moved ${name}`)
+        refresh()
+        refreshTree()
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Move failed")
+      }
+    },
+    [refresh],
+  )
 
   const handleDelete = useCallback(
     async (entry: FsEntry) => {
@@ -256,7 +281,11 @@ export function FileBrowser() {
             <span>Index</span>
             <span className="font-mono not-[.smallcaps]:normal-case opacity-60">⁂</span>
           </div>
-          <FolderTree currentPath={currentPath} refreshKey={treeRefreshKey} />
+          <FolderTree
+            currentPath={currentPath}
+            refreshKey={treeRefreshKey}
+            onMove={handleMove}
+          />
         </aside>
 
         <main
@@ -283,6 +312,7 @@ export function FileBrowser() {
                 onPreview={setPreviewFile}
                 onDownload={handleDownload}
                 onDelete={handleDelete}
+                onMove={handleMove}
               />
             )}
           </div>

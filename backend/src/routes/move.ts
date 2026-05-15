@@ -6,6 +6,24 @@ import { Errors } from "../errors";
 
 export const moveRouter = Router();
 
+// Docker Desktop's WSL2 bind mount has a known stale-dirent bug after
+// rename(2) across directories: readdir sees the entry but stat returns
+// ENOENT. Copying the bytes and unlinking the source uses different
+// syscalls (open/write/unlink) and avoids the bad cache state.
+function moveEntry(src: string, dst: string): void {
+  const stat = fs.lstatSync(src);
+  if (stat.isDirectory()) {
+    fs.mkdirSync(dst);
+    for (const name of fs.readdirSync(src)) {
+      moveEntry(path.join(src, name), path.join(dst, name));
+    }
+    fs.rmdirSync(src);
+  } else {
+    fs.writeFileSync(dst, fs.readFileSync(src));
+    fs.unlinkSync(src);
+  }
+}
+
 moveRouter.post("/", (req: Request, res: Response, next: NextFunction) => {
   try {
     const { from, to } = req.body ?? {};
@@ -22,7 +40,7 @@ moveRouter.post("/", (req: Request, res: Response, next: NextFunction) => {
     const toParent = path.dirname(toAbs);
     if (!fs.existsSync(toParent)) throw Errors.notFound("Destination parent folder does not exist");
 
-    fs.renameSync(fromAbs, toAbs);
+    moveEntry(fromAbs, toAbs);
     res.json({ from: toApiPath(fromAbs), to: toApiPath(toAbs) });
   } catch (e) {
     next(e);

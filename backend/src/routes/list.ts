@@ -15,19 +15,30 @@ listRouter.get("/", (req: Request, res: Response, next: NextFunction) => {
     const stat = fs.statSync(absolute);
     if (!stat.isDirectory()) throw Errors.invalidRequest("Path is not a folder");
 
-    const entries = fs.readdirSync(absolute, { withFileTypes: true }).map((d) => {
-      const entryAbs = path.join(absolute, d.name);
-      const s = fs.statSync(entryAbs);
-      const isFile = d.isFile();
-      return {
-        name: d.name,
-        path: toApiPath(entryAbs),
-        type: isFile ? "file" : "folder",
-        size: isFile ? s.size : null,
-        mimeType: isFile ? mimeFor(d.name) : null,
-        modifiedAt: s.mtime.toISOString(),
-      };
-    });
+    const entries = fs
+      .readdirSync(absolute, { withFileTypes: true })
+      .flatMap((d) => {
+        const entryAbs = path.join(absolute, d.name);
+        let s: fs.Stats;
+        try {
+          s = fs.statSync(entryAbs);
+        } catch (err) {
+          // Ghost entry: readdir sees it but stat can't reach it. Happens
+          // intermittently on Docker Desktop's WSL2 bind mount after a
+          // cross-directory rename. Skip it rather than 500.
+          if ((err as NodeJS.ErrnoException).code === "ENOENT") return [];
+          throw err;
+        }
+        const isFile = d.isFile();
+        return [{
+          name: d.name,
+          path: toApiPath(entryAbs),
+          type: isFile ? "file" : "folder",
+          size: isFile ? s.size : null,
+          mimeType: isFile ? mimeFor(d.name) : null,
+          modifiedAt: s.mtime.toISOString(),
+        }];
+      });
 
     const normalizedApiPath = toApiPath(absolute);
     const parent = normalizedApiPath === "/" ? null : toApiPath(path.dirname(absolute));

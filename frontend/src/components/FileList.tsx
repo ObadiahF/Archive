@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import {
   File as FileIcon,
@@ -12,6 +13,7 @@ import {
 } from "lucide-react"
 import type { FsEntry, FsFile } from "@/api/types"
 import { formatBytes, formatDate, getExtension, getPreviewKind } from "@/lib/fileTypes"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -19,6 +21,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+
+export const DRAG_MIME = "application/x-archive-entry"
 
 function getFileIcon(file: FsFile) {
   const kind = getPreviewKind(file.name, file.mimeType)
@@ -42,10 +46,12 @@ interface FileListProps {
   onPreview: (file: FsFile) => void
   onDownload: (file: FsFile) => void
   onDelete: (entry: FsEntry) => void
+  onMove?: (fromPath: string, toFolderPath: string) => void
 }
 
-export function FileList({ entries, onPreview, onDownload, onDelete }: FileListProps) {
+export function FileList({ entries, onPreview, onDownload, onDelete, onMove }: FileListProps) {
   const navigate = useNavigate()
+  const [dragOverPath, setDragOverPath] = useState<string | null>(null)
 
   if (entries.length === 0) {
     return (
@@ -77,14 +83,50 @@ export function FileList({ entries, onPreview, onDownload, onDelete }: FileListP
       <div>
         {entries.map((entry, idx) => {
           const isFolder = entry.kind === "folder"
+          const isDragTarget = isFolder && dragOverPath === entry.path
           return (
             <div
               key={entry.path}
+              draggable={!!onMove}
+              onDragStart={(e) => {
+                if (!onMove) return
+                e.dataTransfer.setData(DRAG_MIME, entry.path)
+                e.dataTransfer.setData("text/plain", entry.name)
+                e.dataTransfer.effectAllowed = "move"
+              }}
+              onDragOver={(e) => {
+                if (!isFolder || !onMove) return
+                if (!e.dataTransfer.types.includes(DRAG_MIME)) return
+                e.preventDefault()
+                e.stopPropagation()
+                e.dataTransfer.dropEffect = "move"
+              }}
+              onDragEnter={(e) => {
+                if (!isFolder || !onMove) return
+                if (!e.dataTransfer.types.includes(DRAG_MIME)) return
+                setDragOverPath(entry.path)
+              }}
+              onDragLeave={() => {
+                if (isFolder) setDragOverPath((p) => (p === entry.path ? null : p))
+              }}
+              onDrop={(e) => {
+                if (!isFolder || !onMove) return
+                const from = e.dataTransfer.getData(DRAG_MIME)
+                if (!from) return
+                e.preventDefault()
+                e.stopPropagation()
+                setDragOverPath(null)
+                onMove(from, entry.path)
+              }}
               onDoubleClick={() => {
                 if (isFolder) navigate(`/files/${entry.path}`)
                 else onPreview(entry as FsFile)
               }}
-              className="ink-rise group grid grid-cols-[1fr_120px_180px_44px] gap-6 px-6 py-2.5 items-center cursor-pointer border-b border-dashed border-[color:var(--border)]/60 hover:bg-[color:var(--accent)]/55 transition-colors"
+              className={cn(
+                "ink-rise group grid grid-cols-[1fr_120px_180px_44px] gap-6 px-6 py-2.5 items-center cursor-pointer border-b border-dashed border-[color:var(--border)]/60 hover:bg-[color:var(--accent)]/55 transition-colors",
+                isDragTarget &&
+                  "bg-[color:var(--accent)] outline outline-2 outline-[color:var(--ochre)] outline-offset-[-2px]",
+              )}
               style={{ animationDelay: `${Math.min(idx, 12) * 22}ms` }}
             >
               <button
