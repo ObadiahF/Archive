@@ -186,22 +186,37 @@ export function FileBrowser() {
 
   return (
     <div className="h-screen flex flex-col bg-background text-foreground">
-      <header className="flex items-center justify-between border-b px-4 py-2 shrink-0">
-        <div className="flex items-center gap-2">
-          <div className="font-semibold tracking-tight">File Manager</div>
+      <header className="double-rule flex items-center justify-between px-6 py-4 shrink-0 relative">
+        <div className="flex items-end gap-4">
+          <div className="flex items-baseline gap-3">
+            <span className="wordmark text-3xl text-foreground select-none">
+              Archive<span className="text-[color:var(--ochre)]">.</span>
+            </span>
+            <span className="smallcaps text-[0.68rem] text-muted-foreground hidden sm:inline">
+              the file cabinet
+            </span>
+          </div>
+          <span className="stamp text-[color:var(--ochre)] hidden md:inline-flex -translate-y-1 -rotate-2">
+            Vol. I · Folio {(currentPath.split("/").filter(Boolean).length + 1).toString().padStart(2, "0")}
+          </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <Button
             variant="outline"
             size="sm"
             onClick={() => setNewFolderOpen(true)}
+            className="smallcaps font-medium border-[color:var(--rule)]/40"
           >
             <FolderPlus className="h-4 w-4 mr-2" />
-            New Folder
+            New folder
           </Button>
-          <Button size="sm" onClick={() => fileInputRef.current?.click()}>
+          <Button
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            className="smallcaps font-medium"
+          >
             <Upload className="h-4 w-4 mr-2" />
-            Upload
+            Deposit
           </Button>
           <input
             ref={fileInputRef}
@@ -215,7 +230,11 @@ export function FileBrowser() {
       </header>
 
       <div className="flex flex-1 min-h-0">
-        <aside className="w-64 shrink-0 border-r overflow-y-auto p-2">
+        <aside className="w-72 shrink-0 border-r border-[color:var(--rule)]/30 overflow-y-auto px-3 py-4 bg-[color:var(--sidebar)]">
+          <div className="smallcaps text-[0.65rem] text-muted-foreground mb-2 px-1 flex items-center justify-between">
+            <span>Index</span>
+            <span className="font-mono not-[.smallcaps]:normal-case opacity-60">⁂</span>
+          </div>
           <FolderTree currentPath={currentPath} refreshKey={treeRefreshKey} />
         </aside>
 
@@ -226,13 +245,16 @@ export function FileBrowser() {
           onDragOver={onDragOver}
           onDrop={onDrop}
         >
-          <div className="px-4 py-3 border-b">
+          <div className="px-6 py-3 border-b border-[color:var(--rule)]/40 flex items-center justify-between">
             <Breadcrumb path={currentPath} />
+            <span className="smallcaps text-[0.65rem] text-muted-foreground tabular hidden md:inline">
+              {entries.length} {entries.length === 1 ? "entry" : "entries"}
+            </span>
           </div>
           <div className="overflow-y-auto h-[calc(100%-49px)]">
             {loading ? (
-              <div className="flex items-center justify-center py-24 text-sm text-muted-foreground">
-                Loading…
+              <div className="flex items-center justify-center py-24 font-serif italic text-muted-foreground">
+                <span className="animate-pulse">filing…</span>
               </div>
             ) : (
               <FileList
@@ -257,25 +279,33 @@ export function FileBrowser() {
       <Dialog open={newFolderOpen} onOpenChange={setNewFolderOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>New folder</DialogTitle>
-            <DialogDescription>
-              Create a new folder in {currentPath ? `/${currentPath}` : "the root folder"}.
+            <DialogTitle className="font-serif text-2xl font-medium" style={{ fontVariationSettings: '"opsz" 144, "SOFT" 100' }}>
+              Open a new folio
+            </DialogTitle>
+            <DialogDescription className="font-serif italic">
+              Filed inside{" "}
+              <span className="font-mono not-italic text-foreground/80">
+                {currentPath ? `/${currentPath}` : "/"}
+              </span>
             </DialogDescription>
           </DialogHeader>
           <Input
             value={newFolderName}
             onChange={(e) => setNewFolderName(e.target.value)}
-            placeholder="Folder name"
+            placeholder="Title this folder…"
             autoFocus
+            className="font-mono"
             onKeyDown={(e) => {
               if (e.key === "Enter") handleCreateFolder()
             }}
           />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setNewFolderOpen(false)}>
-              Cancel
+            <Button variant="outline" onClick={() => setNewFolderOpen(false)} className="smallcaps">
+              Dismiss
             </Button>
-            <Button onClick={handleCreateFolder}>Create</Button>
+            <Button onClick={handleCreateFolder} className="smallcaps">
+              File it
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

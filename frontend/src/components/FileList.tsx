@@ -6,7 +6,6 @@ import {
   FileText,
   FileVideo,
   FileAudio,
-  Folder,
   Download,
   Trash2,
   MoreVertical,
@@ -24,11 +23,16 @@ import {
 function getFileIcon(file: FsFile) {
   const kind = getPreviewKind(file.name, file.mimeType)
   const ext = getExtension(file.name)
-  if (kind === "image") return <FileImage className="h-4 w-4 text-emerald-500" />
-  if (kind === "pdf") return <FileText className="h-4 w-4 text-red-500" />
-  if (kind === "code") return <FileCode className="h-4 w-4 text-purple-500" />
-  if (kind === "video") return <FileVideo className="h-4 w-4 text-orange-500" />
-  if (kind === "audio") return <FileAudio className="h-4 w-4 text-pink-500" />
+  if (kind === "image")
+    return <FileImage className="h-4 w-4 text-[color:var(--teal-faded)]" />
+  if (kind === "pdf")
+    return <FileText className="h-4 w-4 text-[color:var(--oxblood)]" />
+  if (kind === "code")
+    return <FileCode className="h-4 w-4 text-[color:var(--aubergine)]" />
+  if (kind === "video")
+    return <FileVideo className="h-4 w-4 text-[color:var(--rust)]" />
+  if (kind === "audio")
+    return <FileAudio className="h-4 w-4 text-[color:var(--rose-dust)]" />
   if (ext) return <FileText className="h-4 w-4 text-muted-foreground" />
   return <FileIcon className="h-4 w-4 text-muted-foreground" />
 }
@@ -45,24 +49,33 @@ export function FileList({ entries, onPreview, onDownload, onDelete }: FileListP
 
   if (entries.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 text-center text-muted-foreground">
-        <Folder className="h-12 w-12 mb-3 opacity-30" />
-        <p className="text-sm">This folder is empty</p>
-        <p className="text-xs mt-1">Drag files here or use the Upload button</p>
+      <div className="flex flex-col items-center justify-center py-24 text-center">
+        <div
+          className="font-serif italic text-2xl text-muted-foreground mb-2"
+          style={{ fontVariationSettings: '"opsz" 96, "SOFT" 100' }}
+        >
+          An empty folio.
+        </div>
+        <p className="font-mono text-xs text-muted-foreground/70 tracking-wider">
+          ⁂ ⁂ ⁂
+        </p>
+        <p className="mt-6 font-serif text-sm text-muted-foreground">
+          Drag papers in, or <span className="smallcaps text-foreground/80">deposit</span> them from above.
+        </p>
       </div>
     )
   }
 
   return (
     <div className="w-full">
-      <div className="grid grid-cols-[1fr_120px_180px_auto] gap-4 px-4 py-2 border-b text-xs font-medium text-muted-foreground uppercase tracking-wide">
-        <div>Name</div>
-        <div>Size</div>
-        <div>Modified</div>
-        <div className="w-10"></div>
+      <div className="grid grid-cols-[1fr_120px_180px_44px] gap-6 px-6 py-2.5 border-b border-[color:var(--rule)]/40 smallcaps text-[0.62rem] text-muted-foreground tracking-[0.18em]">
+        <div>Title</div>
+        <div className="text-right">Bytes</div>
+        <div>Filed</div>
+        <div className="text-right"></div>
       </div>
-      <div className="divide-y">
-        {entries.map((entry) => {
+      <div>
+        {entries.map((entry, idx) => {
           const isFolder = entry.kind === "folder"
           return (
             <div
@@ -71,7 +84,8 @@ export function FileList({ entries, onPreview, onDownload, onDelete }: FileListP
                 if (isFolder) navigate(`/files/${entry.path}`)
                 else onPreview(entry as FsFile)
               }}
-              className="grid grid-cols-[1fr_120px_180px_auto] gap-4 px-4 py-2 items-center hover:bg-accent/50 transition-colors cursor-pointer group"
+              className="ink-rise group grid grid-cols-[1fr_120px_180px_44px] gap-6 px-6 py-2.5 items-center cursor-pointer border-b border-dashed border-[color:var(--border)]/60 hover:bg-[color:var(--accent)]/55 transition-colors"
+              style={{ animationDelay: `${Math.min(idx, 12) * 22}ms` }}
             >
               <button
                 type="button"
@@ -79,19 +93,31 @@ export function FileList({ entries, onPreview, onDownload, onDelete }: FileListP
                   if (isFolder) navigate(`/files/${entry.path}`)
                   else onPreview(entry as FsFile)
                 }}
-                className="flex items-center gap-3 min-w-0 text-left"
+                className="flex items-baseline gap-3 min-w-0 text-left"
               >
-                {isFolder ? (
-                  <Folder className="h-4 w-4 shrink-0 text-blue-500" />
-                ) : (
-                  getFileIcon(entry as FsFile)
-                )}
-                <span className="truncate text-sm">{entry.name}</span>
+                <span className="self-center inline-flex h-4 w-4 items-center justify-center shrink-0">
+                  {isFolder ? (
+                    <span className="folder-tab" aria-hidden />
+                  ) : (
+                    getFileIcon(entry as FsFile)
+                  )}
+                </span>
+                <span
+                  className={
+                    isFolder
+                      ? "truncate font-serif text-[15px] tracking-tight group-hover:text-[color:var(--ochre)] transition-colors"
+                      : "truncate font-serif text-[15px] tracking-tight"
+                  }
+                  style={{ fontVariationSettings: '"opsz" 36, "SOFT" 100' }}
+                >
+                  {entry.name}
+                </span>
+                <span className="leader" aria-hidden />
               </button>
-              <div className="text-sm text-muted-foreground">
+              <div className="text-right tabular font-mono text-xs text-muted-foreground">
                 {isFolder ? "—" : formatBytes((entry as FsFile).size)}
               </div>
-              <div className="text-sm text-muted-foreground">
+              <div className="font-mono text-xs text-muted-foreground tabular">
                 {formatDate(entry.modifiedAt)}
               </div>
               <div className="flex items-center justify-end">
@@ -110,11 +136,11 @@ export function FileList({ entries, onPreview, onDownload, onDelete }: FileListP
                     {!isFolder && (
                       <>
                         <DropdownMenuItem onClick={() => onPreview(entry as FsFile)}>
-                          Preview
+                          Examine
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onDownload(entry as FsFile)}>
                           <Download className="h-4 w-4 mr-2" />
-                          Download
+                          Withdraw
                         </DropdownMenuItem>
                       </>
                     )}
@@ -123,7 +149,7 @@ export function FileList({ entries, onPreview, onDownload, onDelete }: FileListP
                       variant="destructive"
                     >
                       <Trash2 className="h-4 w-4 mr-2" />
-                      Delete
+                      Incinerate
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

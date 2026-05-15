@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { Link, useLocation } from "react-router-dom"
-import { ChevronRight, Folder, FolderOpen } from "lucide-react"
+import { ChevronRight } from "lucide-react"
 import { getFolderTree } from "@/api/mockApi"
 import type { FsFolder } from "@/api/types"
 import { cn } from "@/lib/utils"
@@ -40,10 +40,12 @@ function FolderTreeNode({ folder, depth, currentPath, refreshKey }: FolderTreeNo
     <div>
       <div
         className={cn(
-          "group flex items-center gap-1 py-1 pr-2 rounded-md hover:bg-accent transition-colors cursor-pointer",
-          isActive && "bg-accent text-accent-foreground font-medium",
+          "group relative flex items-center gap-1 py-1.5 pr-2 transition-colors cursor-pointer",
+          "hover:bg-[color:var(--accent)]/60",
+          isActive &&
+            "bg-[color:var(--accent)] text-foreground before:absolute before:left-0 before:top-1 before:bottom-1 before:w-[3px] before:bg-[color:var(--ochre)] before:rounded-r-sm",
         )}
-        style={{ paddingLeft: depth * 12 + 4 }}
+        style={{ paddingLeft: depth * 14 + 10 }}
       >
         <button
           type="button"
@@ -56,25 +58,34 @@ function FolderTreeNode({ folder, depth, currentPath, refreshKey }: FolderTreeNo
         >
           <ChevronRight
             className={cn(
-              "h-3.5 w-3.5 transition-transform",
+              "h-3.5 w-3.5 transition-transform duration-200",
               expanded && "rotate-90",
             )}
           />
         </button>
         <Link
           to={`/files/${folder.path}`}
-          className="flex items-center gap-2 flex-1 min-w-0 text-sm"
+          className="flex items-center gap-2.5 flex-1 min-w-0 text-sm group"
         >
-          {expanded ? (
-            <FolderOpen className="h-4 w-4 shrink-0 text-blue-500" />
-          ) : (
-            <Folder className="h-4 w-4 shrink-0 text-blue-500" />
-          )}
-          <span className="truncate">{folder.name}</span>
+          <span className={cn("folder-tab", expanded && "is-open")} aria-hidden />
+          <span
+            className={cn(
+              "truncate font-serif tracking-tight",
+              isActive ? "font-medium" : "font-normal",
+            )}
+            style={{ fontVariationSettings: '"opsz" 24, "SOFT" 100' }}
+          >
+            {folder.name}
+          </span>
         </Link>
       </div>
       {expanded && children && (
-        <div>
+        <div className="relative">
+          <span
+            className="absolute top-0 bottom-0 w-px bg-[color:var(--border)]/70"
+            style={{ left: depth * 14 + 18 }}
+            aria-hidden
+          />
           {children.map((child) => (
             <FolderTreeNode
               key={child.path}
@@ -111,17 +122,28 @@ export function FolderTree({ currentPath, refreshKey }: FolderTreeProps) {
   }, [refreshKey])
 
   return (
-    <div className="space-y-0.5">
+    <div className="space-y-px">
       <Link
         to="/files"
         className={cn(
-          "flex items-center gap-2 py-1 px-2 rounded-md hover:bg-accent transition-colors text-sm",
-          isRootActive && "bg-accent text-accent-foreground font-medium",
+          "relative flex items-center gap-2.5 py-1.5 pl-[10px] pr-2 text-sm transition-colors",
+          "hover:bg-[color:var(--accent)]/60",
+          isRootActive &&
+            "bg-[color:var(--accent)] before:absolute before:left-0 before:top-1 before:bottom-1 before:w-[3px] before:bg-[color:var(--ochre)] before:rounded-r-sm",
         )}
       >
-        <Folder className="h-4 w-4 shrink-0 text-blue-500" />
-        <span>All files</span>
+        <span className="folder-tab is-open" aria-hidden />
+        <span
+          className={cn(
+            "font-serif tracking-tight",
+            isRootActive ? "font-medium" : "font-normal",
+          )}
+          style={{ fontVariationSettings: '"opsz" 24, "SOFT" 100' }}
+        >
+          The Archive
+        </span>
       </Link>
+      <div className="mx-1 my-2 border-t border-dashed border-[color:var(--border)]/70" />
       {roots.map((folder) => (
         <FolderTreeNode
           key={folder.path}

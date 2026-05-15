@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom"
-import { ChevronRight, Home } from "lucide-react"
 import { Fragment } from "react"
 
 interface BreadcrumbProps {
@@ -14,27 +13,36 @@ export function Breadcrumb({ path }: BreadcrumbProps) {
   }))
 
   return (
-    <nav className="flex items-center gap-1 text-sm text-muted-foreground overflow-x-auto">
+    <nav className="flex items-center gap-2 text-sm overflow-x-auto">
+      <span className="smallcaps text-[0.62rem] text-muted-foreground mr-1 tracking-[0.18em]">
+        Filed under
+      </span>
       <Link
         to="/files"
-        className="flex items-center gap-1 px-2 py-1 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+        className="font-serif italic text-muted-foreground hover:text-[color:var(--ochre)] transition-colors"
+        style={{ fontVariationSettings: '"opsz" 36, "SOFT" 100' }}
       >
-        <Home className="h-3.5 w-3.5" />
-        <span>Home</span>
+        Archive
       </Link>
       {crumbs.map((crumb, i) => {
         const isLast = i === crumbs.length - 1
         return (
           <Fragment key={crumb.href}>
-            <ChevronRight className="h-3.5 w-3.5 shrink-0" />
+            <span className="text-[color:var(--rule)]/60 font-serif select-none" aria-hidden>
+              ⁄
+            </span>
             {isLast ? (
-              <span className="px-2 py-1 font-medium text-foreground">
+              <span
+                className="font-serif font-medium text-foreground tracking-tight"
+                style={{ fontVariationSettings: '"opsz" 36, "SOFT" 100' }}
+              >
                 {crumb.name}
               </span>
             ) : (
               <Link
                 to={crumb.href}
-                className="px-2 py-1 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+                className="font-serif italic text-muted-foreground hover:text-[color:var(--ochre)] transition-colors"
+                style={{ fontVariationSettings: '"opsz" 36, "SOFT" 100' }}
               >
                 {crumb.name}
               </Link>
