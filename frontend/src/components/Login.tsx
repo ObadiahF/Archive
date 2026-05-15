@@ -1,8 +1,10 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { KeyRound, User } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { login } from "@/api/api"
 
 export function Login() {
   const navigate = useNavigate()
@@ -10,14 +12,18 @@ export function Login() {
   const [password, setPassword] = useState("")
   const [submitting, setSubmitting] = useState(false)
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Design-only — no auth wired. Simulate a beat, then return to /files.
+    if (!username || !password) return
     setSubmitting(true)
-    setTimeout(() => {
-      setSubmitting(false)
+    try {
+      await login(username, password)
       navigate("/files")
-    }, 650)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Login failed")
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (

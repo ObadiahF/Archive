@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { downloadFile, getFileText } from "@/api/mockApi"
+import { downloadFile, getFileText } from "@/api/api"
 import type { FsFile } from "@/api/types"
 import { formatBytes, getPreviewKind } from "@/lib/fileTypes"
 import { ImagePreview } from "@/components/previews/ImagePreview"

@@ -1,14 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from "react"
-import { useLocation } from "react-router-dom"
-import { FolderPlus, Upload } from "lucide-react"
+import { useLocation, useNavigate } from "react-router-dom"
+import { FolderPlus, LogOut, Upload } from "lucide-react"
 import { toast } from "sonner"
 import {
   createFolder,
   deleteEntry,
   downloadFile,
   listFolder,
+  logout,
   uploadFile,
-} from "@/api/mockApi"
+} from "@/api/api"
+import { getToken } from "@/api/auth"
 import type { FsEntry, FsFile } from "@/api/types"
 import { Breadcrumb } from "@/components/Breadcrumb"
 import { FolderTree } from "@/components/FolderTree"
@@ -36,7 +38,17 @@ function pathFromLocation(pathname: string): string {
 
 export function FileBrowser() {
   const location = useLocation()
+  const navigate = useNavigate()
   const currentPath = pathFromLocation(location.pathname)
+
+  useEffect(() => {
+    if (!getToken()) navigate("/login", { replace: true })
+  }, [navigate])
+
+  const handleLogout = async () => {
+    await logout()
+    navigate("/login", { replace: true })
+  }
 
   const [entries, setEntries] = useState<FsEntry[]>([])
   const [loading, setLoading] = useState(true)
@@ -225,6 +237,15 @@ export function FileBrowser() {
             className="hidden"
             onChange={handleFilePick}
           />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleLogout}
+            className="smallcaps font-medium border-[color:var(--rule)]/40"
+            title="Sign out"
+          >
+            <LogOut className="h-4 w-4" />
+          </Button>
           <ThemeToggle />
         </div>
       </header>

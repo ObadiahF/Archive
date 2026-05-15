@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import { Link, useLocation } from "react-router-dom"
 import { ChevronRight } from "lucide-react"
-import { getFolderTree } from "@/api/mockApi"
+import { getFolderTree } from "@/api/api"
 import type { FsFolder } from "@/api/types"
 import { cn } from "@/lib/utils"
 

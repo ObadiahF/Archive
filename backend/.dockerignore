@@ -1,0 +1,10 @@
+node_modules
+dist
+storage
+uploads
+tests
+jest.config.js
+.env
+.env.*
+*.log
+.DS_Store
