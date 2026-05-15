@@ -296,7 +296,7 @@ export function FileBrowser() {
           onDrop={onDrop}
         >
           <div className="px-6 py-3 border-b border-[color:var(--rule)]/40 flex items-center justify-between">
-            <Breadcrumb path={currentPath} />
+            <Breadcrumb path={currentPath} onMove={handleMove} />
             <span className="smallcaps text-[0.65rem] text-muted-foreground tabular hidden md:inline">
               {entries.length} {entries.length === 1 ? "entry" : "entries"}
             </span>
