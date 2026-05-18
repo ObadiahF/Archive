@@ -35,7 +35,18 @@ import { Input } from "@/components/ui/input"
 function pathFromLocation(pathname: string): string {
   const prefix = "/files"
   if (!pathname.startsWith(prefix)) return ""
-  return pathname.slice(prefix.length).replace(/^\/+/, "").replace(/\/+$/, "")
+  const stripped = pathname.slice(prefix.length).replace(/^\/+/, "").replace(/\/+$/, "")
+  if (!stripped) return ""
+  return stripped
+    .split("/")
+    .map((segment) => {
+      try {
+        return decodeURIComponent(segment)
+      } catch {
+        return segment
+      }
+    })
+    .join("/")
 }
 
 export function FileBrowser() {
