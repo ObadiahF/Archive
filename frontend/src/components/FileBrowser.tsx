@@ -58,6 +58,8 @@ export function FileBrowser() {
   const [dragOver, setDragOver] = useState(false)
   const [newFolderOpen, setNewFolderOpen] = useState(false)
   const [newFolderName, setNewFolderName] = useState("")
+  const [renameTarget, setRenameTarget] = useState<FsEntry | null>(null)
+  const [renameValue, setRenameValue] = useState("")
   const [treeRefreshKey, setTreeRefreshKey] = useState(0)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const dragCounter = useRef(0)
@@ -135,6 +137,35 @@ export function FileBrowser() {
     },
     [refresh],
   )
+
+  const openRename = useCallback((entry: FsEntry) => {
+    setRenameTarget(entry)
+    setRenameValue(entry.name)
+  }, [])
+
+  const handleRename = useCallback(async () => {
+    if (!renameTarget) return
+    const next = renameValue.trim()
+    if (!next || next === renameTarget.name) {
+      setRenameTarget(null)
+      return
+    }
+    if (next.includes("/") || next.includes("\\")) {
+      toast.error("Name can't contain slashes")
+      return
+    }
+    const parent = renameTarget.path.split("/").slice(0, -1).join("/")
+    const dest = parent ? `${parent}/${next}` : next
+    try {
+      await moveEntry(renameTarget.path, dest)
+      toast.success(`Renamed to ${next}`)
+      setRenameTarget(null)
+      refresh()
+      refreshTree()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Rename failed")
+    }
+  }, [refresh, renameTarget, renameValue])
 
   const startUpload = useCallback(
     async (files: FileList | File[]) => {
@@ -312,6 +343,7 @@ export function FileBrowser() {
                 onPreview={setPreviewFile}
                 onDownload={handleDownload}
                 onDelete={handleDelete}
+                onRename={openRename}
                 onMove={handleMove}
               />
             )}
@@ -326,6 +358,43 @@ export function FileBrowser() {
         onOpenChange={(open) => !open && setPreviewFile(null)}
         onDownload={handleDownload}
       />
+
+      <Dialog
+        open={renameTarget !== null}
+        onOpenChange={(open) => !open && setRenameTarget(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="font-serif text-2xl font-medium" style={{ fontVariationSettings: '"opsz" 144, "SOFT" 100' }}>
+              Re-letter the {renameTarget?.kind === "folder" ? "folio" : "paper"}
+            </DialogTitle>
+            <DialogDescription className="font-serif italic">
+              Currently filed as{" "}
+              <span className="font-mono not-italic text-foreground/80">
+                {renameTarget?.name}
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            value={renameValue}
+            onChange={(e) => setRenameValue(e.target.value)}
+            placeholder="New title…"
+            autoFocus
+            className="font-mono"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleRename()
+            }}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRenameTarget(null)} className="smallcaps">
+              Dismiss
+            </Button>
+            <Button onClick={handleRename} className="smallcaps">
+              Re-file
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={newFolderOpen} onOpenChange={setNewFolderOpen}>
         <DialogContent>
