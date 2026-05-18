@@ -1,5 +1,7 @@
 import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
+import fs from "fs";
+import path from "path";
 import { ApiError } from "./errors";
 import { requireAuth } from "./auth";
 import { ensureStorageRoot } from "./storage";
@@ -30,6 +32,17 @@ export function createApp() {
   app.use("/api/folder", requireAuth, folderRouter);
   app.use("/api/move", requireAuth, moveRouter);
   app.use("/api/entry", requireAuth, entryRouter);
+
+  const publicDir = process.env.PUBLIC_DIR || path.resolve(process.cwd(), "public");
+  const indexPath = path.join(publicDir, "index.html");
+  if (fs.existsSync(indexPath)) {
+    app.use(express.static(publicDir, { index: false }));
+    app.use((req: Request, res: Response, next: NextFunction) => {
+      if (req.method !== "GET" && req.method !== "HEAD") return next();
+      if (req.path.startsWith("/api/") || req.path.startsWith("/health")) return next();
+      res.sendFile(indexPath);
+    });
+  }
 
   app.use((_req: Request, res: Response) => {
     res.status(404).json({ error: "Not Found", code: "NOT_FOUND" });

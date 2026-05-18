@@ -1,0 +1,17 @@
+**/node_modules
+**/dist
+**/.git
+**/.github
+**/.claude
+**/.env
+**/.env.*
+**/.vscode
+**/.idea
+**/coverage
+**/*.log
+data
+backend/storage
+backend/uploads
+backend/tests
+**/Dockerfile
+**/.dockerignore
