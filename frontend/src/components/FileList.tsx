@@ -8,8 +8,11 @@ import {
   FileVideo,
   FileAudio,
   Download,
+  FilePlus2,
+  FolderPlus,
   Pencil,
   Trash2,
+  Upload,
   MoreVertical,
 } from "lucide-react"
 import type { FsEntry, FsFile } from "@/api/types"
@@ -57,33 +60,79 @@ interface FileListProps {
   onDelete: (entry: FsEntry) => void
   onRename: (entry: FsEntry) => void
   onMove?: (fromPath: string, toFolderPath: string) => void
+  onNewFile?: () => void
+  onNewFolder?: () => void
+  onUpload?: () => void
 }
 
-export function FileList({ entries, onPreview, onDownload, onDelete, onRename, onMove }: FileListProps) {
+export function FileList({
+  entries,
+  onPreview,
+  onDownload,
+  onDelete,
+  onRename,
+  onMove,
+  onNewFile,
+  onNewFolder,
+  onUpload,
+}: FileListProps) {
   const navigate = useNavigate()
   const [dragOverPath, setDragOverPath] = useState<string | null>(null)
 
+  const outerMenu = (
+    <ContextMenuContent>
+      {onNewFile && (
+        <ContextMenuItem onClick={() => onNewFile()}>
+          <FilePlus2 className="h-4 w-4 mr-2" />
+          New file
+        </ContextMenuItem>
+      )}
+      {onNewFolder && (
+        <ContextMenuItem onClick={() => onNewFolder()}>
+          <FolderPlus className="h-4 w-4 mr-2" />
+          New folder
+        </ContextMenuItem>
+      )}
+      {onUpload && (
+        <>
+          <ContextMenuSeparator />
+          <ContextMenuItem onClick={() => onUpload()}>
+            <Upload className="h-4 w-4 mr-2" />
+            Deposit…
+          </ContextMenuItem>
+        </>
+      )}
+    </ContextMenuContent>
+  )
+
   if (entries.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 text-center">
-        <div
-          className="font-serif italic text-2xl text-muted-foreground mb-2"
-          style={{ fontVariationSettings: '"opsz" 96, "SOFT" 100' }}
-        >
-          An empty folio.
-        </div>
-        <p className="font-mono text-xs text-muted-foreground/70 tracking-wider">
-          ⁂ ⁂ ⁂
-        </p>
-        <p className="mt-6 font-serif text-sm text-muted-foreground">
-          Drag papers in, or <span className="smallcaps text-foreground/80">deposit</span> them from above.
-        </p>
-      </div>
+      <ContextMenu>
+        <ContextMenuTrigger asChild>
+          <div className="flex flex-col items-center justify-center py-24 text-center min-h-full">
+            <div
+              className="font-serif italic text-2xl text-muted-foreground mb-2"
+              style={{ fontVariationSettings: '"opsz" 96, "SOFT" 100' }}
+            >
+              An empty folio.
+            </div>
+            <p className="font-mono text-xs text-muted-foreground/70 tracking-wider">
+              ⁂ ⁂ ⁂
+            </p>
+            <p className="mt-6 font-serif text-sm text-muted-foreground">
+              Drag papers in, or <span className="smallcaps text-foreground/80">deposit</span> them from above.
+            </p>
+          </div>
+        </ContextMenuTrigger>
+        {outerMenu}
+      </ContextMenu>
     )
   }
 
   return (
-    <div className="w-full">
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        <div className="w-full min-h-full">
       <div className="grid grid-cols-[1fr_120px_180px_44px] gap-6 px-6 py-2.5 border-b border-[color:var(--rule)]/40 smallcaps text-[0.62rem] text-muted-foreground tracking-[0.18em]">
         <div>Title</div>
         <div className="text-right">Bytes</div>
@@ -243,6 +292,9 @@ export function FileList({ entries, onPreview, onDownload, onDelete, onRename, o
           )
         })}
       </div>
-    </div>
+        </div>
+      </ContextMenuTrigger>
+      {outerMenu}
+    </ContextMenu>
   )
 }

@@ -220,6 +220,53 @@ export async function createFolder(parentPath: string, name: string): Promise<Fs
   }
 }
 
+interface FileMetadataResponse {
+  path: string
+  size: number
+  modifiedAt: string
+  mimeType: string
+}
+
+function metadataToFsFile(meta: FileMetadataResponse): FsFile {
+  const segments = meta.path.split("/").filter((s) => s.length > 0)
+  const name = segments[segments.length - 1] ?? ""
+  return {
+    name,
+    path: toFrontendPath(meta.path),
+    kind: "file",
+    modifiedAt: Date.parse(meta.modifiedAt) || Date.now(),
+    size: meta.size,
+    mimeType: meta.mimeType,
+  }
+}
+
+export async function createFile(
+  parentPath: string,
+  name: string,
+  content: string = "",
+): Promise<FsFile> {
+  const parent = toApiPath(parentPath)
+  const newPath = parent === "/" ? `/${name}` : `${parent}/${name}`
+  const res = await request("/api/file", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ path: newPath, content }),
+  })
+  const data = (await res.json()) as FileMetadataResponse
+  return metadataToFsFile(data)
+}
+
+export async function writeFile(path: string, content: string): Promise<FsFile> {
+  const apiPath = toApiPath(path)
+  const res = await request("/api/file", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ path: apiPath, content }),
+  })
+  const data = (await res.json()) as FileMetadataResponse
+  return metadataToFsFile(data)
+}
+
 export async function deleteEntry(path: string): Promise<void> {
   const apiPath = toApiPath(path)
   if (apiPath === "/") throw new ApiError("Cannot delete the root", 400)

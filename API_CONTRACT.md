@@ -175,6 +175,55 @@ Upload one or more files into a folder.
 
 **Limits:** 100 MB per file, 20 files per request (configurable via env).
 
+### `POST /api/file`
+
+Create a new file. Use this for authoring text files directly in the UI; binary uploads go through `POST /api/upload`.
+
+**Request**
+```json
+{ "path": "/notes/todo.md", "content": "# Todo\n" }
+```
+
+- `path` (required) — full path including filename and extension.
+- `content` (optional, default empty string) — initial UTF-8 text content.
+
+**Response 201**
+```json
+{
+  "path": "/notes/todo.md",
+  "size": 7,
+  "modifiedAt": "2026-05-17T10:30:00.000Z",
+  "mimeType": "text/markdown"
+}
+```
+
+**Errors:** `409 ALREADY_EXISTS`, `404 NOT_FOUND` (parent folder missing), `400 INVALID_PATH`, `400 INVALID_REQUEST`, `413 FILE_TOO_LARGE`.
+
+**Limits:** 5 MB JSON body.
+
+### `PUT /api/file`
+
+Overwrite the contents of an existing file with UTF-8 text. Path must already exist and refer to a file.
+
+**Request**
+```json
+{ "path": "/notes/todo.md", "content": "# Todo\n- ship feature\n" }
+```
+
+**Response 200**
+```json
+{
+  "path": "/notes/todo.md",
+  "size": 21,
+  "modifiedAt": "2026-05-17T10:35:00.000Z",
+  "mimeType": "text/markdown"
+}
+```
+
+**Errors:** `404 NOT_FOUND`, `400 INVALID_REQUEST` (path is a folder, or `content` not a string), `400 INVALID_PATH`, `413 FILE_TOO_LARGE`.
+
+**Limits:** 5 MB JSON body. The endpoint writes UTF-8 only — round-tripping non-text bytes will corrupt the file.
+
 ### `POST /api/folder`
 
 Create a new folder.

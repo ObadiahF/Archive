@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from "express";
 import fs from "fs";
 import path from "path";
-import { resolveSafe, mimeFor } from "../storage";
+import { resolveSafe, toApiPath, mimeFor } from "../storage";
 import { Errors } from "../errors";
 
 export const fileRouter = Router();
@@ -70,6 +70,56 @@ fileRouter.get("/", (req: Request, res: Response, next: NextFunction) => {
 fileRouter.get("/download", (req: Request, res: Response, next: NextFunction) => {
   try {
     streamFile(req, res, "attachment");
+  } catch (e) {
+    next(e);
+  }
+});
+
+function fileMetadata(absolute: string) {
+  const stat = fs.statSync(absolute);
+  return {
+    path: toApiPath(absolute),
+    size: stat.size,
+    modifiedAt: stat.mtime.toISOString(),
+    mimeType: mimeFor(absolute),
+  };
+}
+
+fileRouter.post("/", (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { path: apiPath, content } = req.body ?? {};
+    if (typeof apiPath !== "string") throw Errors.invalidRequest("path is required");
+    if (content !== undefined && typeof content !== "string") {
+      throw Errors.invalidRequest("content must be a string");
+    }
+
+    const absolute = resolveSafe(apiPath);
+    if (fs.existsSync(absolute)) throw Errors.alreadyExists("File already exists");
+
+    const parent = path.dirname(absolute);
+    if (!fs.existsSync(parent) || !fs.statSync(parent).isDirectory()) {
+      throw Errors.notFound("Parent folder does not exist");
+    }
+
+    fs.writeFileSync(absolute, content ?? "", "utf8");
+    res.status(201).json(fileMetadata(absolute));
+  } catch (e) {
+    next(e);
+  }
+});
+
+fileRouter.put("/", (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { path: apiPath, content } = req.body ?? {};
+    if (typeof apiPath !== "string") throw Errors.invalidRequest("path is required");
+    if (typeof content !== "string") throw Errors.invalidRequest("content must be a string");
+
+    const absolute = resolveSafe(apiPath);
+    if (!fs.existsSync(absolute)) throw Errors.notFound("File not found");
+    if (!fs.statSync(absolute).isFile()) throw Errors.invalidRequest("Path is not a file");
+
+    fs.writeFileSync(absolute, content, "utf8");
+    res.json(fileMetadata(absolute));
   } catch (e) {
     next(e);
   }

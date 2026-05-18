@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
-import { FolderPlus, LogOut, Upload } from "lucide-react"
+import { FilePlus2, FolderPlus, LogOut, Upload } from "lucide-react"
 import { toast } from "sonner"
 import {
+  createFile,
   createFolder,
   deleteEntry,
   downloadFile,
@@ -54,10 +55,13 @@ export function FileBrowser() {
   const [entries, setEntries] = useState<FsEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [previewFile, setPreviewFile] = useState<FsFile | null>(null)
+  const [previewStartInEdit, setPreviewStartInEdit] = useState(false)
   const [uploadTasks, setUploadTasks] = useState<UploadTask[]>([])
   const [dragOver, setDragOver] = useState(false)
   const [newFolderOpen, setNewFolderOpen] = useState(false)
   const [newFolderName, setNewFolderName] = useState("")
+  const [newFileOpen, setNewFileOpen] = useState(false)
+  const [newFileName, setNewFileName] = useState("")
   const [renameTarget, setRenameTarget] = useState<FsEntry | null>(null)
   const [renameValue, setRenameValue] = useState("")
   const [treeRefreshKey, setTreeRefreshKey] = useState(0)
@@ -249,6 +253,31 @@ export function FileBrowser() {
     }
   }
 
+  const handleCreateFile = async () => {
+    const name = newFileName.trim()
+    if (!name) return
+    if (name.includes("/") || name.includes("\\")) {
+      toast.error("Name can't contain slashes")
+      return
+    }
+    try {
+      const file = await createFile(currentPath, name)
+      setNewFileOpen(false)
+      setNewFileName("")
+      toast.success(`Created ${name}`)
+      refresh()
+      setPreviewStartInEdit(true)
+      setPreviewFile(file)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to create file")
+    }
+  }
+
+  const openPreview = useCallback((file: FsFile) => {
+    setPreviewStartInEdit(false)
+    setPreviewFile(file)
+  }, [])
+
   const dismissUpload = (id: string) =>
     setUploadTasks((prev) => prev.filter((t) => t.id !== id))
 
@@ -269,6 +298,15 @@ export function FileBrowser() {
           </span>
         </div>
         <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setNewFileOpen(true)}
+            className="smallcaps font-medium border-[color:var(--rule)]/40"
+          >
+            <FilePlus2 className="h-4 w-4 mr-2" />
+            New file
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -340,11 +378,14 @@ export function FileBrowser() {
             ) : (
               <FileList
                 entries={entries}
-                onPreview={setPreviewFile}
+                onPreview={openPreview}
                 onDownload={handleDownload}
                 onDelete={handleDelete}
                 onRename={openRename}
                 onMove={handleMove}
+                onNewFile={() => setNewFileOpen(true)}
+                onNewFolder={() => setNewFolderOpen(true)}
+                onUpload={() => fileInputRef.current?.click()}
               />
             )}
           </div>
@@ -355,8 +396,18 @@ export function FileBrowser() {
 
       <PreviewDialog
         file={previewFile}
-        onOpenChange={(open) => !open && setPreviewFile(null)}
+        startInEdit={previewStartInEdit}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPreviewFile(null)
+            setPreviewStartInEdit(false)
+          }
+        }}
         onDownload={handleDownload}
+        onSaved={() => {
+          refresh()
+          refreshTree()
+        }}
       />
 
       <Dialog
@@ -391,6 +442,42 @@ export function FileBrowser() {
             </Button>
             <Button onClick={handleRename} className="smallcaps">
               Re-file
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={newFileOpen} onOpenChange={setNewFileOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="font-serif text-2xl font-medium" style={{ fontVariationSettings: '"opsz" 144, "SOFT" 100' }}>
+              Commission a new paper
+            </DialogTitle>
+            <DialogDescription className="font-serif italic">
+              Filed inside{" "}
+              <span className="font-mono not-italic text-foreground/80">
+                {currentPath ? `/${currentPath}` : "/"}
+              </span>
+              . Include an extension (e.g.{" "}
+              <span className="font-mono not-italic text-foreground/80">notes.md</span>).
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            value={newFileName}
+            onChange={(e) => setNewFileName(e.target.value)}
+            placeholder="e.g. todo.md"
+            autoFocus
+            className="font-mono"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleCreateFile()
+            }}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNewFileOpen(false)} className="smallcaps">
+              Dismiss
+            </Button>
+            <Button onClick={handleCreateFile} className="smallcaps">
+              Draft it
             </Button>
           </DialogFooter>
         </DialogContent>
