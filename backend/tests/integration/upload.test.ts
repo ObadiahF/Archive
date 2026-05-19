@@ -1,8 +1,8 @@
 import request from "supertest";
 import fs from "fs";
 import path from "path";
-import { createApp } from "../src/app";
-import { getToken } from "./helpers";
+import { createApp } from "../../src/app";
+import { getToken } from "../helpers";
 
 const STORAGE = process.env.STORAGE_ROOT!;
 

@@ -1,0 +1,4 @@
+.e2e-storage/
+playwright-report/
+test-results/
+node_modules/
