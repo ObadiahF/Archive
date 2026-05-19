@@ -18,5 +18,14 @@ export default defineConfig([
     languageOptions: {
       globals: globals.browser,
     },
+    rules: {
+      // shadcn ui modules and context providers export both components
+      // and hooks/constants from the same file, which is intentional.
+      'react-refresh/only-export-components': 'off',
+      // The opt-in v6 rule fires on common patterns (state reset when a
+      // prop nulls, syncing derived state, invoking a memoized callback in
+      // an effect). Treat as advisory rather than blocking.
+      'react-hooks/set-state-in-effect': 'off',
+    },
   },
 ])

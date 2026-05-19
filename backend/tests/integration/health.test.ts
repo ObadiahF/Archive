@@ -1,5 +1,5 @@
 import request from "supertest";
-import { createApp } from "../src/app";
+import { createApp } from "../../src/app";
 
 describe("operational endpoints", () => {
   const app = createApp();
