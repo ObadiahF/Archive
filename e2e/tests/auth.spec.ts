@@ -16,7 +16,9 @@ test("rejects bad credentials with a toast", async ({ page }) => {
 
 test("logs in successfully and lands on the file browser", async ({ page }) => {
   await login(page)
-  await expect(page.getByText("Archive", { exact: false })).toBeVisible()
+  // login() already asserts the URL; pick a landmark unique to the
+  // file browser (the Deposit upload button) to confirm it rendered.
+  await expect(page.getByRole("button", { name: /deposit/i })).toBeVisible()
 })
 
 test("persists session across reload", async ({ page }) => {

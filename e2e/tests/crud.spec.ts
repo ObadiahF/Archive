@@ -17,17 +17,22 @@ test("creates a text file and edits it in the preview dialog", async ({ page }) 
   await page.getByRole("button", { name: /new file/i }).click()
   await page.getByPlaceholder(/e\.g\. todo\.md/i).fill("notes.md")
   await page.getByRole("button", { name: /draft it/i }).click()
-  await expect(page.getByText("notes.md")).toBeVisible()
+  // Creating a text file pops open the preview dialog in edit mode.
+  await expect(page.getByRole("dialog")).toBeVisible()
+  await expect(page.getByRole("dialog").getByText("notes.md")).toBeVisible()
 })
 
 test("deletes a folder from the context menu", async ({ page }) => {
   await page.getByRole("button", { name: /new folder/i }).click()
   await page.getByPlaceholder(/title this folder/i).fill("toremove")
   await page.getByRole("button", { name: /file it/i }).click()
-  await expect(page.getByText("toremove")).toBeVisible()
+  // Scope to the file list row (a <button>) — sidebar uses a link, and
+  // toast notifications also contain the name.
+  const fileRow = page.getByRole("button", { name: "toremove", exact: true })
+  await expect(fileRow).toBeVisible()
 
   page.on("dialog", (d) => d.accept())
-  await page.getByText("toremove").click({ button: "right" })
+  await fileRow.click({ button: "right" })
   await page.getByRole("menuitem", { name: /incinerate/i }).click()
-  await expect(page.getByText("toremove")).not.toBeVisible()
+  await expect(fileRow).toHaveCount(0)
 })

@@ -15,5 +15,9 @@ test("uploads a file via the deposit button and shows it in the list", async ({ 
     mimeType: "text/plain",
     buffer: Buffer.from("hello from e2e"),
   })
-  await expect(page.getByText("e2e.txt")).toBeVisible()
+  // Scope to the file list row (rendered as a button) so we don't match
+  // the upload-progress card or the success toast.
+  await expect(
+    page.getByRole("button", { name: "e2e.txt", exact: true }),
+  ).toBeVisible()
 })
